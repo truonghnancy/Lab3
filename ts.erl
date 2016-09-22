@@ -40,4 +40,4 @@ match([P|PS],[L|LS]) -> case match(P,L) of
                               false -> false
                          end;
 match(P,P) -> true;
-match(,) -> false.
+match(_,_) -> false.
