@@ -11,19 +11,26 @@ out(TS, Tuple) ->
   0.
 
 server(L) ->
+
   receive
-    {Pid, Pattern} when match(Pattern, L) ->
+    {Pid, Pattern} when matchList(Pattern, L) ->
       Pid ! 0;
     {Tuple} -> server(L ++ Tuple)
   end.
 
+matchList(Pattern, L) ->
+  case match(Pattern, hd(L)) of
+     true -> true;
+     false -> matchList(Pattern, tl(L))
+  end.
+
 % Match method from Erlang?
-  match(any,_) -> true;
-  match(P,Q) when is_tuple(P), is_tuple(Q)
-                  -> match(tuple_to_list(P),tuple_to_list(Q));
-  match([P|PS],[L|LS]) -> case match(P,L) of
-                                true -> match(PS,LS);
-                                false -> false
-                           end;
-  match(P,P) -> true;
-  match(,) -> false.
+match(any,_) -> true;
+match(P,Q) when is_tuple(P), is_tuple(Q)
+                -> match(tuple_to_list(P),tuple_to_list(Q));
+match([P|PS],[L|LS]) -> case match(P,L) of
+                              true -> match(PS,LS);
+                              false -> false
+                         end;
+match(P,P) -> true;
+match(,) -> false.
