@@ -8,13 +8,13 @@ new() ->
 in(TS, Pattern) ->
   TS ! {self(), Pattern},
   receive
-    Tuple -> io:fwrite("Process ~p received Tuple ~p from Tuplespace ~p~n", self(), Tuple, TS)
+    Tuple -> io:fwrite("Process ~p received Tuple ~p from Tuplespace ~p~n", [self(), Tuple, TS])
   end.
 
 % client emits a tuple
 out(TS, Tuple) ->
   TS ! Tuple,
-  io:fwrite("Process ~p sent Tuple ~p to Tuplespace ~p~n", self(), Tuple, TS).
+  io:fwrite("Process ~p sent Tuple ~p to Tuplespace ~p~n", [self(), Tuple, TS]).
 
 server(Tuples, Waitlist) ->
 
