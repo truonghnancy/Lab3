@@ -1,5 +1,5 @@
 -module(ts).
--export([new/0, in/2, out/2]).
+-export([new/0, in/2, out/2, matchList/2]).
 
 new() ->
   spawn_link(fun() -> server([],[]) end).
@@ -17,14 +17,23 @@ out(TS, Tuple) ->
   io:fwrite("Process ~p sent Tuple ~p to Tuplespace ~p~n", [self(), Tuple, TS]).
 
 server(Tuples, Waitlist) ->
-
+  % check in the waitlist if there is anything in it
+  % see if any pattern in the waitlist matches any tuples in the tuples list
+  % if yes do sending if not you done
+  % call server again after removing tuple!!!
   receive
-    {Pid, Pattern} -> server(Tuples, Waitlist ++ [{Pid, Pattern}]);
-    %TODO: check if this process can be immediately woken
-    {Tuple} -> server(Tuples ++ [Tuple], Waitlist)
+    {Pid, Pattern} -> case matchList(Pattern, Tuples) of
+        true -> io:fwrite("there is a match~n"); % search tuple, return it<
+        false ->
+          io:fwrite("there is no match~n"),
+          server(Tuples, Waitlist ++ [{Pid, Pattern}])
+      end;
+    {Tuple} -> io:fwrite("Tuples = ~p~n", Tuples ++ [Tuple]),
+       server(Tuples ++ [Tuple], Waitlist)
     %TODO: go through waitlist and check if there's a process that can be woken
   end.
 
+matchList(_, []) -> false;
 matchList(Pattern, L) ->
   case match(Pattern, hd(L)) of
      true -> true;
