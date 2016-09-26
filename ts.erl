@@ -24,7 +24,7 @@ server(Tuples, Waitlist) ->
   receive
     {Pid, Pattern} ->
         case matchList(Pattern, Tuples) of
-        true -> io:fwrite("there is a match~n"), % search tuple, return it<
+        true -> io:fwrite("there is a match~n"),
           ReturnTuple = findTuple(Pattern, Tuples),
           Pid ! ReturnTuple,
           server(lists:delete(ReturnTuple, Tuples), Waitlist);
@@ -33,8 +33,19 @@ server(Tuples, Waitlist) ->
           server(Tuples, Waitlist ++ [{Pid, Pattern}])
         end;
     {Tuple} -> io:fwrite("Tuples = ~p~n", Tuples ++ [Tuple]),
-       server(Tuples ++ [Tuple], Waitlist)
+       case findPattern(Waitlist, Tuple) of
+         false -> server(Tuples ++ [Tuple], Waitlist)%,
+%         {Pid, ReturnTuple} -> Pid ! ReturnTuple,
+%           server(Tuples, lists:delete({Pid, ReturnTuple}, Waitlist))
+       end
     %TODO: go through waitlist and check if there's a process that can be woken
+  end.
+
+findPattern([], _) -> false;
+findPattern(Waitlist, T) ->
+  case match(element(2, hd(Waitlist)), T) of
+    true -> hd(Waitlist);
+    false -> findPattern(tl(Waitlist), T)
   end.
 
 findTuple(_, []) -> false;
