@@ -13,7 +13,7 @@ in(TS, Pattern) ->
 
 % client emits a tuple
 out(TS, Tuple) ->
-  TS ! Tuple,
+  TS ! {Tuple},
   io:fwrite("Process ~p sent Tuple ~p to Tuplespace ~p~n", [self(), Tuple, TS]).
 
 server(Tuples, Waitlist) ->
@@ -22,12 +22,13 @@ server(Tuples, Waitlist) ->
   % if yes do sending if not you done
   % call server again after removing tuple!!!
   receive
-    {Pid, Pattern} -> case matchList(Pattern, Tuples) of
+    {Pid, Pattern} ->
+        case matchList(Pattern, Tuples) of
         true -> io:fwrite("there is a match~n"); % search tuple, return it<
         false ->
           io:fwrite("there is no match~n"),
           server(Tuples, Waitlist ++ [{Pid, Pattern}])
-      end;
+        end;
     {Tuple} -> io:fwrite("Tuples = ~p~n", Tuples ++ [Tuple]),
        server(Tuples ++ [Tuple], Waitlist)
     %TODO: go through waitlist and check if there's a process that can be woken
