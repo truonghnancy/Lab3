@@ -1,5 +1,5 @@
 -module(ts).
--export([new/0, in/2, out/2, matchList/2]).
+-export([new/0, in/2, out/2, matchList/2, findTuple/2]).
 
 new() ->
   spawn_link(fun() -> server([],[]) end).
@@ -24,15 +24,14 @@ server(Tuples, Waitlist) ->
   receive
     {Pid, Pattern} ->
         case matchList(Pattern, Tuples) of
-        true -> io:fwrite("there is a match~n"),
+        true ->
           ReturnTuple = findTuple(Pattern, Tuples),
           Pid ! ReturnTuple,
           server(lists:delete(ReturnTuple, Tuples), Waitlist);
         false ->
-          io:fwrite("there is no match~n"),
           server(Tuples, Waitlist ++ [{Pid, Pattern}])
         end;
-    {Tuple} -> io:fwrite("Tuples = ~p~n", Tuples ++ [Tuple]),
+    {Tuple} -> io:fwrite("Tuples = ~p~n", [Tuples ++ [Tuple]]),
        case findPattern(Waitlist, Tuple) of
          false -> server(Tuples ++ [Tuple], Waitlist);
          {Pid, ReturnTuple} -> Pid ! ReturnTuple,
@@ -52,7 +51,7 @@ findTuple(_, []) -> false;
 findTuple(Pattern, L) ->
   case match(Pattern, hd(L)) of
      true -> hd(L);
-     false -> matchList(Pattern, tl(L))
+     false -> findTuple(Pattern, tl(L))
   end.
 
 matchList(_, []) -> false;
@@ -62,7 +61,7 @@ matchList(Pattern, L) ->
      false -> matchList(Pattern, tl(L))
   end.
 
-% Match method
+% Match method (provided)
 match(any,_) -> true;
 match(P,Q) when is_tuple(P), is_tuple(Q)
                 -> match(tuple_to_list(P),tuple_to_list(Q));
