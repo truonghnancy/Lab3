@@ -34,9 +34,9 @@ server(Tuples, Waitlist) ->
         end;
     {Tuple} -> io:fwrite("Tuples = ~p~n", Tuples ++ [Tuple]),
        case findPattern(Waitlist, Tuple) of
-         false -> server(Tuples ++ [Tuple], Waitlist)%,
-%         {Pid, ReturnTuple} -> Pid ! ReturnTuple,
-%           server(Tuples, lists:delete({Pid, ReturnTuple}, Waitlist))
+         false -> server(Tuples ++ [Tuple], Waitlist);
+         {Pid, ReturnTuple} -> Pid ! ReturnTuple,
+           server(Tuples, lists:delete({Pid, ReturnTuple}, Waitlist))
        end
     %TODO: go through waitlist and check if there's a process that can be woken
   end.
