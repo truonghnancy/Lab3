@@ -6,19 +6,20 @@ new() ->
 
 % client wants to read in a tuple
 in(TS, Pattern) ->
-  TS ! {self(), Pattern},
+  TS ! {in, self(), Pattern},
   receive
-    Tuple -> io:fwrite("Process ~p received ~p from Tuplespace ~p~n", [self(), Tuple, TS])
+    Tuple -> io:fwrite("Process ~p received ~p from Tuplespace ~p~n", [self(), Tuple, TS]),
+      Tuple
   end.
 
 % client emits a tuple
 out(TS, Tuple) ->
-  TS ! {Tuple},
+  TS ! {out, Tuple},
   io:fwrite("Process ~p sent ~p to Tuplespace ~p~n", [self(), Tuple, TS]).
 
 server(Tuples, Waitlist) ->
   receive
-    {Pid, Pattern} ->
+    {in, Pid, Pattern} ->
         case matchList(Pattern, Tuples) of
         true ->
           ReturnTuple = findTuple(Pattern, Tuples),
@@ -27,7 +28,7 @@ server(Tuples, Waitlist) ->
         false ->
           server(Tuples, Waitlist ++ [{Pid, Pattern}])
         end;
-    {Tuple} ->
+    {out, Tuple} ->
 %       io:fwrite("Tuples = ~p~n", [Tuples ++ [Tuple]]),
        case findPattern(Waitlist, Tuple) of
          false -> server(Tuples ++ [Tuple], Waitlist);
