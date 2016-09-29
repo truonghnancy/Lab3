@@ -8,19 +8,15 @@ new() ->
 in(TS, Pattern) ->
   TS ! {self(), Pattern},
   receive
-    Tuple -> io:fwrite("Process ~p received Tuple ~p from Tuplespace ~p~n", [self(), Tuple, TS])
+    Tuple -> io:fwrite("Process ~p received ~p from Tuplespace ~p~n", [self(), Tuple, TS])
   end.
 
 % client emits a tuple
 out(TS, Tuple) ->
   TS ! {Tuple},
-  io:fwrite("Process ~p sent Tuple ~p to Tuplespace ~p~n", [self(), Tuple, TS]).
+  io:fwrite("Process ~p sent ~p to Tuplespace ~p~n", [self(), Tuple, TS]).
 
 server(Tuples, Waitlist) ->
-  % check in the waitlist if there is anything in it
-  % see if any pattern in the waitlist matches any tuples in the tuples list
-  % if yes do sending if not you done
-  % call server again after removing tuple!!!
   receive
     {Pid, Pattern} ->
         case matchList(Pattern, Tuples) of
@@ -31,15 +27,17 @@ server(Tuples, Waitlist) ->
         false ->
           server(Tuples, Waitlist ++ [{Pid, Pattern}])
         end;
-    {Tuple} -> io:fwrite("Tuples = ~p~n", [Tuples ++ [Tuple]]),
+    {Tuple} ->
+%       io:fwrite("Tuples = ~p~n", [Tuples ++ [Tuple]]),
        case findPattern(Waitlist, Tuple) of
          false -> server(Tuples ++ [Tuple], Waitlist);
-         {Pid, ReturnTuple} -> Pid ! ReturnTuple,
-           server(Tuples, lists:delete({Pid, ReturnTuple}, Waitlist))
+         {Pid, ReturnPattern} -> Pid ! Tuple,
+           server(Tuples, lists:delete({Pid, ReturnPattern}, Waitlist))
        end
     %TODO: go through waitlist and check if there's a process that can be woken
   end.
 
+% to find a pattern in the waitlist
 findPattern([], _) -> false;
 findPattern(Waitlist, T) ->
   case match(element(2, hd(Waitlist)), T) of
@@ -47,6 +45,7 @@ findPattern(Waitlist, T) ->
     false -> findPattern(tl(Waitlist), T)
   end.
 
+% to find the matching tuple in L (tuplespace)
 findTuple(_, []) -> false;
 findTuple(Pattern, L) ->
   case match(Pattern, hd(L)) of
@@ -54,6 +53,7 @@ findTuple(Pattern, L) ->
      false -> findTuple(Pattern, tl(L))
   end.
 
+% to see if any tuple in L (tuplespace) matches the Pattern
 matchList(_, []) -> false;
 matchList(Pattern, L) ->
   case match(Pattern, hd(L)) of
